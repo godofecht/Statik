@@ -76,6 +76,11 @@ private:
 
 
     SortedSet<int> notes;
+
+
+    //high pass
+    IIRFilter monoFilterL;
+    IIRFilter monoFilterR;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StatikAudioProcessor)
 };

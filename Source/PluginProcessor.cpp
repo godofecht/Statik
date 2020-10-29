@@ -100,6 +100,13 @@ void StatikAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     phase = 0;
     wtSize = 1024;
     amplitude = 0.25;
+
+    //high pass
+    double freq = 10000;
+    double q = 1.0;
+
+    monoFilterL.setCoefficients(IIRCoefficients::makeLowPass(sampleRate, freq, q));
+    monoFilterR.setCoefficients(IIRCoefficients::makeLowPass(sampleRate, freq, q));
 }
 
 void StatikAudioProcessor::releaseResources()
@@ -138,7 +145,7 @@ void StatikAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-
+    delay.calcParams(getSampleRate());
 
     //Print midi messages
 
@@ -194,7 +201,8 @@ void StatikAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 
             phase = fmod(( phase + increment),wtSize);
 
-            delay.process(channelDataL[sample]);
+
+
             channelDataR[sample] = channelDataL[sample];
         }
 
@@ -214,7 +222,20 @@ void StatikAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     }
 
 
+    for (int channel = 0; channel < 1; ++channel)
+    {
+        auto* channelDataL = buffer.getWritePointer(0);
+        auto* channelDataR = buffer.getWritePointer(1);
 
+        for (int sample = 0; sample < buffer.getNumSamples(); sample++)
+        {
+            delay.process(channelDataL[sample]);
+            channelDataR[sample] = channelDataL[sample];
+        }
+    }
+
+    monoFilterL.processSamples(buffer.getWritePointer(0), buffer.getNumSamples());
+    monoFilterR.processSamples(buffer.getWritePointer(1), buffer.getNumSamples());
 }
 
 //==============================================================================
